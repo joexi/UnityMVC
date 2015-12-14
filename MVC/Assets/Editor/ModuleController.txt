@@ -1,0 +1,6 @@
+using UnityEngine;
+using System.Collections;
+
+public class {0}Controller : ControllerBase {
+{1}
+}

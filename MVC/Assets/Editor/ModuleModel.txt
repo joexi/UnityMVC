@@ -1,0 +1,6 @@
+using UnityEngine;
+using System.Collections;
+public class {0}Model : ModelBase
+{
+{1}
+}
