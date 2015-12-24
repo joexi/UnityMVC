@@ -3,4 +3,22 @@ using System.Collections;
 
 public class {0}View : ViewBase {
 {1}
+
+	public override void Start () {
+{2}
+	}
+
+	public override void Update () {
+		
+	}
+
+	public override void OnEnable () {
+		
+	}
+
+	public override void OnDisable () {
+		
+	}
+
+{3}
 }

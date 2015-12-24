@@ -64,13 +64,16 @@ public class MVCEditor : ScriptableObject
 
         string result = "";
 
-        result += print<UILabel>(root.transform);
-        result += print<UISprite>(root.transform);
-        result += print<UITexture>(root.transform);
-        result += print<UIButton>(root.transform);
+        result += generate<UILabel>(root.transform);
+        result += generate<UISprite>(root.transform);
+        result += generate<UITexture>(root.transform);
+        result += generate<UIButton>(root.transform);
 
         text_model = text_model.Replace ("{0}", root.name);
         text_model = text_model.Replace ("{1}", result);
+
+		text_model = generateButtonEvent (root.transform, text_model);
+
         string out_put = text_model;
 
         byte[] bytes = System.Text.Encoding.UTF8.GetBytes(out_put);
@@ -97,26 +100,51 @@ public class MVCEditor : ScriptableObject
     static void Connect<T>(Transform trans, ViewBase view) where T : Component
     {
         Dictionary <string ,bool> go_dic = new Dictionary<string, bool>();
-        foreach (T sp in trans.GetComponentsInChildren<T>(true))
+		foreach (T temp in trans.GetComponentsInChildren<T>(true))
         {
             string class_name = typeof(T).ToString();
-            string obj_name = sp.name;
+			string obj_name = prefix<T>() + temp.name;
             int index = 0;
             while (go_dic.ContainsKey(obj_name))
             {
                 index++;
-                obj_name = sp.name + index.ToString();
+                obj_name = temp.name + index.ToString();
             }
             go_dic[obj_name] = true;
             FieldInfo field = view.GetType().GetField(obj_name);
             if (field != null)
             {
-                field.SetValue(view, sp);
+                field.SetValue(view, temp);
             }
         }
     }
 
-    static string print<T>(Transform trans) where T : Component
+	static string generateButtonEvent(Transform trans, string result)
+	{
+		
+		string registerResult = string.Empty;
+		string eventResult = string.Empty;
+		Dictionary <string ,bool> go_dic = new Dictionary<string, bool>();
+
+		foreach (UIButton sp in trans.GetComponentsInChildren<UIButton>(true)) {
+			string class_name = typeof(UIButton).ToString();
+			string obj_name = sp.name;
+			int index = 0;
+			while (go_dic.ContainsKey(obj_name))
+			{
+				index++;
+				obj_name = sp.name + index.ToString();
+			}
+			registerResult += string.Format("        UIEventListener.Get({0}.gameObject).onClick = {1}_onclick;\n", prefix<UIButton>() + obj_name, obj_name);
+			eventResult += string.Format(@"    void {0}_onclick (GameObject go) {1}", obj_name, "{ \n\n\t} \n\n");
+			go_dic[obj_name] = true;
+		}
+		result = result.Replace ("{2}", registerResult);
+		result = result.Replace ("{3}", eventResult);
+		return result;
+	}
+
+    static string generate<T>(Transform trans) where T : Component
     {
         string result = string.Empty;
         Dictionary <string ,bool> go_dic = new Dictionary<string, bool>();
@@ -130,9 +158,32 @@ public class MVCEditor : ScriptableObject
                 index++;
                 obj_name = sp.name + index.ToString();
             }
-            result += string.Format("    public {0} {1}; \n", class_name, obj_name);
+			result += string.Format("    public {0} {1}; \n", class_name, prefix<T>() + obj_name);
             go_dic[obj_name] = true;
         }
         return result;
     }
+
+	static string prefix<T>() {
+		string type = typeof(T).ToString();
+		switch(type) {
+			case "UIButton":
+				{
+					return "btn_";
+				}
+			case "UISprite":
+				{
+					return "sp_";
+				}
+			case "UITexture":
+				{
+					return "tex_";
+				}
+			case "UILabel":
+				{
+					return "lbl_";
+				}
+		}
+		return string.Empty;
+	}
 }
